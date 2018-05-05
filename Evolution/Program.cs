@@ -2,6 +2,7 @@
 using Evolution.Utils.Random;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Evolution
@@ -33,7 +34,14 @@ namespace Evolution
 			var controller = new LifeCycleController(map);
 
 			int iterations = 0;
-			while(iterations < 100)
+
+			var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "states.txt");
+			if (File.Exists(path))
+				File.Delete(path);
+
+			var state = new State(iterations, map);
+			Save(state);
+			while (iterations < 100)
 			{
 				if(iterations % 10 == 0)
 				{
@@ -54,19 +62,27 @@ namespace Evolution
 				controller.DoDeadPhase();
 
 				iterations++;
+
+				state = new State(iterations, map);
+				Save(state);
 			}
+		}
+
+		private static void Save(State state)
+		{
+			File.AppendAllLines(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "states.txt"), new string[] { JsonConvert.SerializeObject(state) });
 		}
 
 		private static Map Load(Map map)
 		{
-			var str = File.ReadAllText("out.txt");
+			var str = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "out.txt"));
 			return MapSerializer.Deserialize(str);
 		}
 
 		private static void Save(Map map)
 		{
 			string result = MapSerializer.Serialize(map);
-			File.WriteAllText("out.txt", result);
+			File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "out.txt"), result);
 		}
 	}
 }
