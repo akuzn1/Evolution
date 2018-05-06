@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Evolution.Utils.Random;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -27,17 +28,14 @@ namespace Evolution.Lib
 
 		public int Energy { get; set; }
 
+		public int EatingPriority { get; set; }
+
 		public Organism(Map map, int xPos, int yPos)
+			:this()
 		{
 			X = xPos;
 			Y = yPos;
 			Map = map;
-			IsAlive = true;
-			IsNew = true;
-			Age = 0;
-			CanEatFoodPerTurn = 10;
-			EnergyForEat = 5;
-			EnergyForReproduce = 2;
 		}
 
 		public Organism()
@@ -48,32 +46,33 @@ namespace Evolution.Lib
 			CanEatFoodPerTurn = 10;
 			EnergyForEat = 5;
 			EnergyForReproduce = 2;
+			EatingPriority = RandomGenerator.Random.GetRandom(10);
 		}
 
 		public int GetEatingPriority()
 		{
 			if (Age >= 20)
-				return 0;
+				return -1;
 			if (Age < 10)
-				return 10;
+				return EatingPriority;
 			else
-				return 20 - Age;
+				return Math.Max(EatingPriority + 10 - Age, 0);
 		}
 
 		public void StartStep()
 		{
-			if (!IsAlive || IsNew)
+			if (!IsAlive)
 				throw new InvalidOperationException("Invalid object state");
+			IsNew = false;
 		}
 
 		public void FinishStep()
 		{
-			if (Energy <= 0 && !IsNew)
+			if (Energy < 0 && !IsNew)
 				IsAlive = false;
 			else
 			{
 				Age++;
-				IsNew = false;
 			}
 		}
 
@@ -93,6 +92,7 @@ namespace Evolution.Lib
 				organism.Map = Map;
 				result.Add(organism);
 			}
+			Energy -= childrenCount * EnergyForReproduce;
 			return result;
 		}
 	}

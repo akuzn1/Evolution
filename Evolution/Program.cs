@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Evolution
 {
@@ -11,6 +12,7 @@ namespace Evolution
 	{
 		static void Main(string[] args)
 		{
+			RandomGenerator.Random.IsDebug = false;
 			int mapWidth = 25;
 			int mapHeight = 25;
 			var map = new Map(mapWidth, mapHeight);
@@ -39,15 +41,16 @@ namespace Evolution
 			if (File.Exists(path))
 				File.Delete(path);
 
+			var stateList = new List<State>();
 			var state = new State(iterations, map);
 			Save(state);
+			stateList.Add(state);
 			while (iterations < 100)
 			{
-				if(iterations % 10 == 0)
-				{
-					Save(map);
-					//Load(map);
-				}
+				//if(iterations % 10 == 0)
+				//{
+				//	Save(map);
+				//}
 
 				map.DoNextStep();
 
@@ -59,13 +62,38 @@ namespace Evolution
 
 				controller.DoFinishPhase();
 
+				state = new State(iterations, map);
+				Save(state);
+				stateList.Add(state);
+
 				controller.DoDeadPhase();
 
 				iterations++;
-
-				state = new State(iterations, map);
-				Save(state);
 			}
+			Save(map);
+			SaveToCSV(stateList);
+		}
+
+		private static void SaveToCSV(List<State> stateList)
+		{
+			var sb = new StringBuilder();
+			sb.Append("Iteration,GrassCount,OrganismCount,IsNewCount,IsDeadCount,AgeDistribution");
+			for (int i = 0; i < 19; i++)
+			{
+				sb.Append(",");
+			}
+			sb.AppendLine();
+			foreach (var state in stateList)
+			{
+				sb.AppendFormat("{0},{1},{2},{3},{4}", state.Iteration, state.GrassCount, state.OrganismCount, state.IsNewCount, state.IsDeadCount);
+
+				for (int i = 0; i < 20; i++)
+				{
+					sb.AppendFormat(",{0}",state.AgeDistribution[i]);
+				}
+				sb.AppendLine();
+			}
+			File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "states.csv"), sb.ToString());
 		}
 
 		private static void Save(State state)

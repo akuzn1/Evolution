@@ -100,7 +100,6 @@ namespace Evolution.Test
 			var controller = new LifeCycleController(map);
 			controller.DoFinishPhase();
 
-			Assert.IsFalse(map.Cells[0, 0].Organisms[0].IsNew);
 			Assert.AreEqual(1, map.Cells[0, 0].Organisms[0].Age);
 		}
 	}
